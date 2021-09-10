@@ -2,8 +2,11 @@
 
 namespace Jdefez\LaravelCsv\Tests\Unit;
 
+use Jdefez\LaravelCsv\CsvReader;
 use Jdefez\LaravelCsv\Tests\TestCase;
-use \Mockery;
+use Mockery;
+use Generator;
+use SplFileObject;
 
 class CsvReaderTest extends TestCase
 {
@@ -15,8 +18,29 @@ class CsvReaderTest extends TestCase
     /** @test */
     public function it_works()
     {
-        // http://docs.mockery.io/en/latest/getting_started/simple_example.html
-        $file = Mockery::mock('file');
-        $this->assertTrue(true);
+        /** @var MockInterface */
+        $file = Mockery::mock(SplFileObject::class, [], ['php://memory']);
+
+        $file->shouldReceive('setFlags')
+            ->once();
+
+        $file->shouldReceive('fgetcsv')
+            ->times(2)
+            ->with(';', '"', '\\')
+            ->andReturn(['foo', '1'], ['bar', '2']);
+
+        $file->shouldReceive('eof')
+            ->times(3)
+            ->andReturn(false, false, true);
+
+        $generator = CsvReader::setFile($file)
+            ->read();
+
+        $this->assertInstanceOf(Generator::class, $generator);
+
+        foreach ($generator as $row) {
+            dump($row);
+            $this->assertEquals(2, count($row));
+        }
     }
 }

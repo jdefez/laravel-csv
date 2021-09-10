@@ -3,6 +3,7 @@
 namespace Jdefez\LaravelCsv;
 
 use SplFileObject;
+use Generator;
 
 class CsvReader
 {
@@ -10,14 +11,41 @@ class CsvReader
 
     private string $path;
 
+    private string $separator = ';';
 
-    public function __construct(string $path)
+    private string $enclosure = '"';
+
+    private string $escape = '\\';
+
+    public function __construct(SplFileObject $file)
     {
-        $this->path = $path;
+        $file->setFlags(
+            SplFileObject::READ_CSV
+            | SplFileObject::READ_AHEAD
+            | SplFileObject::SKIP_EMPTY
+            | SplFileObject::DROP_NEW_LINE
+        );
+
+        $this->file = $file;
     }
 
-    public function read()
+    public static function setFile(SplFileObject $file)
     {
-        $this->file = new SplFileObject($this->path);
+        return new self($file);
+    }
+
+    public function read(): Generator
+    {
+        while (!$this->file->eof()) {
+            $line = $this->file->fgetcsv(
+                $this->separator,
+                $this->enclosure,
+                $this->escape
+            );
+
+            if ($line) {
+                yield $line;
+            }
+        }
     }
 }
