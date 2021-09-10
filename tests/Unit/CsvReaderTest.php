@@ -18,6 +18,11 @@ class CsvReaderTest extends TestCase
     /** @test */
     public function it_works()
     {
+        $lines = [
+            ['foo', '1'], ['bar', '2']
+        ];
+        $eofExpectation = $this->getEofExpectations($lines);
+
         /** @var MockInterface */
         $file = Mockery::mock(SplFileObject::class, [], ['php://memory']);
 
@@ -25,22 +30,29 @@ class CsvReaderTest extends TestCase
             ->once();
 
         $file->shouldReceive('fgetcsv')
-            ->times(2)
+            ->times(count($lines))
             ->with(';', '"', '\\')
-            ->andReturn(['foo', '1'], ['bar', '2']);
+            ->andReturn(...$lines);
 
         $file->shouldReceive('eof')
-            ->times(3)
-            ->andReturn(false, false, true);
+            ->times(count($eofExpectation))
+            ->andReturn(...$eofExpectation);
 
         $generator = CsvReader::setFile($file)
             ->read();
 
         $this->assertInstanceOf(Generator::class, $generator);
 
-        foreach ($generator as $row) {
-            dump($row);
-            $this->assertEquals(2, count($row));
-        }
+        //foreach ($generator as $row) {
+            //dump($row);
+        //}
+    }
+
+    private function getEofExpectations(array $lines): array
+    {
+        $eofExpectation = array_fill(0, count($lines), false);
+        $eofExpectation[] = true;
+
+        return $eofExpectation;
     }
 }
