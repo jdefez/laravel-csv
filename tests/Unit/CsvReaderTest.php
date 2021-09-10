@@ -2,10 +2,10 @@
 
 namespace Jdefez\LaravelCsv\Tests\Unit;
 
+use Generator;
 use Jdefez\LaravelCsv\CsvReader;
 use Jdefez\LaravelCsv\Tests\TestCase;
 use Mockery;
-use Generator;
 use SplFileObject;
 
 class CsvReaderTest extends TestCase
