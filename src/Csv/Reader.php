@@ -3,8 +3,8 @@
 namespace Jdefez\LaravelCsv\Csv;
 
 use Generator;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
+use InvalidArgumentException;
 use SplFileObject;
 
 class Reader implements Readable, CsvReadable
@@ -19,22 +19,23 @@ class Reader implements Readable, CsvReadable
 
     private bool $skip_headings = true;
 
-    private bool $map_fields_with_headings = false;
+    private bool $key_by_column_name = false;
 
     private ?array $headings = null;
 
-    // Must include the target encoding: 'UTF-8'
-    private array $encodings = ['ISO-8859-1', 'ISO-8859-15', 'UTF-8'];
+    private ?string $to_encoding = null;
+
+    private array $search_encodings = ['ISO-8859-1', 'ISO-8859-15', 'UTF-8'];
 
     public function __construct(SplFileObject $file)
     {
-        $this->file = $file;
-        $this->file->setFlags(
+        $file->setFlags(
             SplFileObject::READ_CSV
             | SplFileObject::READ_AHEAD
             | SplFileObject::SKIP_EMPTY
             | SplFileObject::DROP_NEW_LINE
         );
+        $this->file = $file;
     }
 
     public static function setFile(SplFileObject $file): CsvReadable
@@ -42,12 +43,26 @@ class Reader implements Readable, CsvReadable
         return new self($file);
     }
 
-    public function setEncodings(array $encodings)
+    public function setToEncoding(string $to_encoding): CsvReadable
     {
-        $this->encodings = $encodings;
+        $this->to_encoding = $to_encoding;
+
+        return $this;
     }
 
-    public function read(): Generator
+    /**
+     * @var $encodings array
+     *
+     * Must include the encoding that will be used to fix
+     * the current file
+     *
+     */
+    public function setSearchEncodings(array $encodings)
+    {
+        $this->search_encodings = $encodings;
+    }
+
+    public function read(?callable $callback = null): Generator
     {
         $index = 0;
         while (! $this->file->eof()) {
@@ -63,7 +78,9 @@ class Reader implements Readable, CsvReadable
                 continue;
             }
 
-            $row = $this->fixEncoding($row);
+            if (! is_null($this->to_encoding)) {
+                $row = $this->handleFixEncoding($row);
+            }
 
             $row = $this->handleMappingSetting($index, $row);
 
@@ -71,19 +88,12 @@ class Reader implements Readable, CsvReadable
                 continue;
             }
 
+            if ($callback && is_callable($callback)) {
+                $row = $callback($row);
+            }
+
             yield $row;
         }
-    }
-
-    public function toCollection(?callable $callback = null): Collection
-    {
-        $collection = collect();
-
-        foreach ($this->read() as $row) {
-            $collection->push(is_callable($callback) ? $callback($row) : $row);
-        }
-
-        return $collection;
     }
 
     public function withHeadings(): CsvReadable
@@ -93,13 +103,9 @@ class Reader implements Readable, CsvReadable
         return $this;
     }
 
-    public function mapFieldsWithHeadings(): CsvReadable
+    public function keyByColumnName(): CsvReadable
     {
-        if ($this->skip_headings) {
-            $this->skip_headings = false;
-        }
-
-        $this->map_fields_with_headings = true;
+        $this->key_by_column_name = true;
 
         return $this;
     }
@@ -121,7 +127,7 @@ class Reader implements Readable, CsvReadable
 
     private function handleMappingSetting(int $index, array $row): array
     {
-        if ($index === 1 && $this->map_fields_with_headings) {
+        if ($index === 1 && $this->key_by_column_name) {
             $this->setHeadings($row);
         }
 
@@ -133,7 +139,7 @@ class Reader implements Readable, CsvReadable
      */
     private function mapFields(array $row): array
     {
-        if (! $this->map_fields_with_headings) {
+        if (! $this->key_by_column_name) {
             return $row;
         }
 
@@ -148,32 +154,42 @@ class Reader implements Readable, CsvReadable
         }
     }
 
-    private function fixEncoding(array $row): array
+    /**
+     * @throws InvalidArgumentException
+     */
+    private function handleFixEncoding(array $row): array
     {
-        if (!self::isUtf8($this->file->current(), $this->encodings)) {
-            return array_map(fn ($item) => self::toUtf8($item), $row);
+        if (!in_array($this->to_encoding, $this->search_encodings)) {
+            throw new InvalidArgumentException(
+                'Reader::$to_encoding must be part of Reader::$search_encodings'
+            );
+        }
+
+        $from_encoding = mb_detect_encoding(
+            $this->file->current(),
+            $this->search_encodings
+        );
+
+        if ($from_encoding
+            && $from_encoding !== $this->to_encoding
+        ) {
+            return array_map(
+                fn ($item) => $this->encode($item, $from_encoding),
+                $row
+            );
         }
 
         return $row;
     }
 
-    public static function isUtf8(
-        ?string $string = null,
-        ?array $encodings = ['ISO-8859-1', 'UTF-8']
-    ): bool {
+    public function encode(?string $string = null, string $from_encoding)
+    {
         if ($string) {
-            return mb_detect_encoding($string, $encodings) === 'UTF-8';
-        }
-
-        return true;
-    }
-
-    public static function toUtf8(
-        ?string $string = null,
-        ?string $fromEncoding = 'ISO-8859-1'
-    ): string {
-        if ($string) {
-            return mb_convert_encoding($string, 'UTF-8', $fromEncoding);
+            return mb_convert_encoding(
+                $string,
+                $this->to_encoding,
+                $from_encoding
+            );
         }
 
         return $string;
