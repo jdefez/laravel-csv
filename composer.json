@@ -1,13 +1,13 @@
 {
   "name": "jdefez/laravel-csv",
   "description": "laravel facade to read/write csv file",
-  "type": "library",
+  "type": "package",
   "version": "0.1.0",
   "keywords": [
-    "laravel", "csv"
+    "laravel", "csv", "reader", "writer"
   ],
   "require": {
-    "php": "^7.4|^8.0",
+    "php": "^8.0",
     "illuminate/contracts": "^8.0"
   },
   "require-dev": {

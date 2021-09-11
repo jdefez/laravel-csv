@@ -3,7 +3,7 @@
 namespace Jdefez\LaravelCsv\Tests\Unit;
 
 use Generator;
-use Jdefez\LaravelCsv\CsvReader;
+use Jdefez\LaravelCsv\Csv\Reader;
 use Jdefez\LaravelCsv\Tests\TestCase;
 use Mockery;
 use SplFileObject;
@@ -29,6 +29,9 @@ class CsvReaderTest extends TestCase
         $file->shouldReceive('setFlags')
             ->once();
 
+        $file->shouldReceive('current')
+            ->zeroOrMoreTimes();
+
         $file->shouldReceive('fgetcsv')
             ->times(count($lines))
             ->with(';', '"', '\\')
@@ -38,7 +41,7 @@ class CsvReaderTest extends TestCase
             ->times(count($eofExpectation))
             ->andReturn(...$eofExpectation);
 
-        $generator = CsvReader::setFile($file)
+        $generator = Reader::setFile($file)
             ->read();
 
         $this->assertInstanceOf(Generator::class, $generator);
