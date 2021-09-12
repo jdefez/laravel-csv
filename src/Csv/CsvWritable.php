@@ -9,6 +9,8 @@ interface CsvWritable
 {
     public static function setFile(SplFileObject $file): CsvWritable;
 
+    public static function fake(?int $maxMemory = null): CsvWritable;
+
     public function setData(Collection $data): CsvWritable;
 
     public function write(?callable $mapping = null): void;
@@ -21,4 +23,3 @@ interface CsvWritable
 
     public function setColumns(array $columns): CsvWritable;
 }
-

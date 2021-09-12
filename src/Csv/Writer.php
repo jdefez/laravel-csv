@@ -4,10 +4,11 @@ namespace Jdefez\LaravelCsv\Csv;
 
 use Illuminate\Support\Collection;
 use SplFileObject;
+use SplTempFileObject;
 
 class Writer implements Writable, CsvWritable
 {
-    private SplFileObject $file;
+    public SplFileObject|SplTempFileObject $file;
 
     private array $columns = [];
 
@@ -15,7 +16,7 @@ class Writer implements Writable, CsvWritable
 
     private string $delimiter = ';';
 
-    private string $enclosure = ' ';
+    private string $enclosure = '"';
 
     private ?string $escape = '\\';
 
@@ -27,6 +28,11 @@ class Writer implements Writable, CsvWritable
     public static function setFile(SplFileObject $file): CsvWritable
     {
         return new self($file);
+    }
+
+    public static function fake(?int $maxMemory = null): CsvWritable
+    {
+        return new self(new SplTempFileObject($maxMemory));
     }
 
     public function setData(Collection $data): CsvWritable
