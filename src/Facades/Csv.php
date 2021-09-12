@@ -1,14 +1,14 @@
 <?php
 
-namespace Jdefez\LaravelCsv;
+namespace Jdefez\LaravelCsv\Facades;
 
-class Csv
+use Illuminate\Support\Facades\Facade;
+use Jdefez\LaravelCsv\Csvable;
+
+class Csv extends Facade
 {
-    public static function read()
+    protected static function getFacadeAccessor()
     {
-    }
-
-    public static function write()
-    {
+        return Csvable::class;
     }
 }

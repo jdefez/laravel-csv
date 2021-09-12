@@ -2,27 +2,39 @@
 
 namespace Jdefez\LaravelCsv\Tests\Unit;
 
-use Jdefez\LaravelCsv\Csv\Writer;
+use Illuminate\Support\Collection;
+use Jdefez\LaravelCsv\Csv\CsvWritable;
+use Jdefez\LaravelCsv\Facades\Csv;
 use Jdefez\LaravelCsv\Tests\TestCase;
 
 class CsvWriterTest extends TestCase
 {
+    private CsvWritable $writer;
+
+    private Collection $lines;
+
+    public function setUp(): void
+    {
+        parent::setUp();
+
+        $this->lines = collect([
+            ['name' => 'foo', 'count' => 1],
+            ['name' => 'bar', 'count' => 2],
+            ['name' => 'baz', 'count' => 3],
+        ]);
+
+        $this->writer = Csv::fakeWriter()
+            ->setData($this->lines);
+    }
+
     /** @test */
     public function it_generates_a_csv_file()
     {
-        $lines = [
-            ['foo', 1],
-            ['bar', 2],
-            ['baz', 3],
-        ];
+        $this->writer->write();
 
-        $writer = Writer::fake()
-            ->setData(collect($lines));
-
-        $writer->write();
-
-        foreach ($writer->file as $line) {
-            $expected = implode(';', array_shift($lines)) . PHP_EOL;
+        $results = $this->lines->toArray();
+        foreach ($this->writer->file as $line) {
+            $expected = implode(';', array_shift($results)) . PHP_EOL;
             $this->assertEquals($expected, $line);
         }
     }
@@ -30,27 +42,18 @@ class CsvWriterTest extends TestCase
     /** @test */
     public function it_maps_data()
     {
-        $lines = [
-            ['name' => 'foo', 'count' => 1],
-            ['name' => 'bar', 'count' => 2],
-            ['name' => 'baz', 'count' => 3],
-        ];
-
-        $writer = Writer::fake()
-            ->setData(collect($lines));
-
-        $writer->write(fn ($item) => [
+        $this->writer->write(fn ($item) => [
             $item['name'],
             $item['count'] * 2
         ]);
 
-        $expected_resuls = [
+        $results = [
             ['foo', 2],
             ['bar', 4],
             ['baz', 6],
         ];
-        foreach ($writer->file as $line) {
-            $expected = implode(';', array_shift($expected_resuls)) . PHP_EOL;
+        foreach ($this->writer->file as $line) {
+            $expected = implode(';', array_shift($results)) . PHP_EOL;
             $this->assertEquals($expected, $line);
         }
     }
@@ -58,23 +61,13 @@ class CsvWriterTest extends TestCase
     /** @test */
     public function it_sets_column_headings()
     {
-        $lines = [
-            ['foo', 1],
-            ['bar', 2],
-            ['baz', 3],
-        ];
-
         $columns = ['column', 'count'];
+        $this->writer->setColumns($columns)->write();
 
-        $writer = Writer::fake()
-            ->setColumns($columns)
-            ->setData(collect($lines));
-
-        $writer->write();
-
-        array_unshift($lines, $columns);
-        foreach ($writer->file as $line) {
-            $expected = implode(';', array_shift($lines)) . PHP_EOL;
+        $results = $this->lines->toArray();
+        array_unshift($results, $columns);
+        foreach ($this->writer->file as $line) {
+            $expected = implode(';', array_shift($results)) . PHP_EOL;
             $this->assertEquals($expected, $line);
         }
     }

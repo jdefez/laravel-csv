@@ -3,22 +3,30 @@
 namespace Jdefez\LaravelCsv\Tests\Unit;
 
 use Generator;
-use Jdefez\LaravelCsv\Csv\Reader;
+use Jdefez\LaravelCsv\Csv\CsvReadable;
+use Jdefez\LaravelCsv\Facades\Csv;
 use Jdefez\LaravelCsv\Tests\TestCase;
 
 class CsvReaderTest extends TestCase
 {
-    // todo: test encoding
+    private CsvReadable $reader;
 
-    /** @test */
-    public function reader_read_method_returns_a_generator()
+    public function setUp(): void
     {
-        $generator = Reader::fake([
+        parent::setUp();
+
+        $this->reader = Csv::fakeReader([
             'column name;count',
             'foo;1',
             'bar;2',
             'baz;3',
-        ])->read();
+        ]);
+    }
+
+    /** @test */
+    public function reader_read_method_returns_a_generator()
+    {
+        $generator = $this->reader->read();
 
         $this->assertInstanceOf(Generator::class, $generator);
     }
@@ -26,12 +34,8 @@ class CsvReaderTest extends TestCase
     /** @test */
     public function it_can_map_data()
     {
-        $generator = Reader::fake([
-            'column name;count',
-            'foo;1',
-            'bar;2',
-            'baz;3',
-        ])->keyByColumnName()
+        $generator = $this->reader
+            ->keyByColumnName()
             ->read(fn ($row) => (object) $row);
 
         foreach ($generator as $row) {
@@ -42,12 +46,8 @@ class CsvReaderTest extends TestCase
     /** @test */
     public function it_skips_headings()
     {
-        $generator = $generator = Reader::fake([
-            'column name;count',
-            'foo;1',
-            'bar;2',
-            'baz;3',
-        ])->keyByColumnName()
+        $generator = $this->reader
+            ->keyByColumnName()
             ->read();
 
         $count = 0;
@@ -61,12 +61,8 @@ class CsvReaderTest extends TestCase
     /** @test */
     public function it_returns_headings_when_requested()
     {
-        $generator = $generator = Reader::fake([
-            'column name;count',
-            'foo;1',
-            'bar;2',
-            'baz;3',
-        ])->withHeadings()
+        $generator = $this->reader
+            ->withHeadings()
             ->read();
 
         $count = 0;
@@ -80,12 +76,8 @@ class CsvReaderTest extends TestCase
     /** @test */
     public function results_are_keyed_by_column_name()
     {
-        $generator = $generator = Reader::fake([
-            'column name;count',
-            'foo;1',
-            'bar;2',
-            'baz;3',
-        ])->keyByColumnName()
+        $generator = $this->reader
+            ->keyByColumnName()
             ->read();
 
         foreach ($generator as $row) {

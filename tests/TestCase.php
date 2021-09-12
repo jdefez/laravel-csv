@@ -2,6 +2,7 @@
 
 namespace Jdefez\LaravelCsv\Tests;
 
+use Jdefez\LaravelCsv\CsvServiceProvider;
 use Orchestra\Testbench\TestCase as Orchestra;
 
 class TestCase extends Orchestra
@@ -14,7 +15,7 @@ class TestCase extends Orchestra
     protected function getPackageProviders($app)
     {
         return [
-            //GraphqlServiceProvider::class,
+            CsvServiceProvider::class,
         ];
     }
 
