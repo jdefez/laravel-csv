@@ -20,4 +20,6 @@ interface CsvReadable
     public function setDelimiter(string $delimiter): CsvReadable;
 
     public function read(?callable $callback = null): Generator;
+
+    public static function fake(array $lines, ?int $maxMemory = null): CsvReadable;
 }
