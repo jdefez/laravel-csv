@@ -6,10 +6,11 @@ use Generator;
 use Illuminate\Support\Str;
 use InvalidArgumentException;
 use SplFileObject;
+use SplTempFileObject;
 
 class Reader implements Readable, CsvReadable
 {
-    public SplFileObject $file;
+    public SplFileObject|SplTempFileObject $file;
 
     private string $delimiter = ';';
 
@@ -35,7 +36,17 @@ class Reader implements Readable, CsvReadable
             | SplFileObject::SKIP_EMPTY
             | SplFileObject::DROP_NEW_LINE
         );
+
         $this->file = $file;
+    }
+
+    public static function fake(array $lines, ?int $maxMemory = null): CsvReadable
+    {
+        $file = new SplTempFileObject($maxMemory);
+        $file->fwrite(implode(PHP_EOL, $lines));
+        $file->rewind();
+
+        return new self($file);
     }
 
     public static function setFile(SplFileObject $file): CsvReadable
@@ -62,9 +73,13 @@ class Reader implements Readable, CsvReadable
         $this->search_encodings = $encodings;
     }
 
+    /**
+     * @throws InvalidArgumentException
+     */
     public function read(?callable $callback = null): Generator
     {
         $index = 0;
+
         while (! $this->file->eof()) {
             ++$index;
 
