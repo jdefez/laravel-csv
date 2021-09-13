@@ -2,7 +2,7 @@
   "name": "jdefez/laravel-csv",
   "description": "laravel facade to read/write csv file",
   "type": "package",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "license": "MIT",
   "keywords": [
     "laravel", "csv", "reader", "writer"
