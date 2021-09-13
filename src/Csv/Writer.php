@@ -20,7 +20,7 @@ class Writer implements Writable, CsvWritable
 
     private ?string $escape = '\\';
 
-    private function __construct(SplFileObject $file)
+    public function __construct(SplFileObject $file)
     {
         $this->file = $file;
     }
