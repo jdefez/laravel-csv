@@ -181,7 +181,7 @@ class Reader implements Readable, CsvReadable
         }
 
         $from_encoding = mb_detect_encoding(
-            $this->file->current(),
+            $this->file->current()[0],
             $this->search_encodings
         );
 
