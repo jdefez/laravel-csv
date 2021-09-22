@@ -42,11 +42,7 @@ class Reader implements Readable, CsvReadable
 
     public static function fake(array $lines, ?int $maxMemory = null): CsvReadable
     {
-        $file = new SplTempFileObject($maxMemory);
-        $file->fwrite(implode(PHP_EOL, $lines));
-        $file->rewind();
-
-        return new self($file);
+        return new self(File::fake($lines, $maxMemory));
     }
 
     public static function setFile(SplFileObject $file): CsvReadable

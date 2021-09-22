@@ -32,7 +32,7 @@ class Writer implements Writable, CsvWritable
 
     public static function fake(?int $maxMemory = null): CsvWritable
     {
-        return new self(new SplTempFileObject($maxMemory));
+        return new self(File::fake(null, $maxMemory));
     }
 
     public function setData(Collection $data): CsvWritable
