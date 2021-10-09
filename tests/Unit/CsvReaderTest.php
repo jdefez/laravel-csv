@@ -33,10 +33,11 @@ class CsvReaderTest extends TestCase
     }
 
     /** @test */
-    public function it_can_map_data()
+    public function it_handles_a_callback_to_map_the_lines()
     {
         $generator = $this->reader
             ->keyByColumnName()
+            // maping to stdClass
             ->read(fn ($row) => (object) $row);
 
         foreach ($generator as $row) {
@@ -103,7 +104,7 @@ class CsvReaderTest extends TestCase
     }
 
     /** @test */
-    public function rows_should_not_be_encoded_if_encoding_used_the_same_the_encoding_requested()
+    public function rows_should_not_be_encoded_if_encoding_is_the_same_the_requested_encoding()
     {
         $generator = Csv::fakeReader([
             'name;count',
