@@ -130,8 +130,11 @@ class CsvReaderTest extends TestCase
             ->read();
 
         foreach ($generator as $row) {
-            $this->assertArrayHasKey('prenom', $row, implode(';', array_keys($row)));
-            $this->assertArrayHasKey('nom_d_usage', $row, implode(';', array_keys($row)));
+            $message = 'Keys found: ' . implode('; ', array_keys($row));
+
+            $this->assertArrayHasKey('prenom', $row, $message);
+            $this->assertArrayHasKey('nom_d_usage', $row, $message);
+
             $this->assertEquals('clémentine', $row['prenom']);
         }
     }
