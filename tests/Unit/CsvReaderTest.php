@@ -88,6 +88,21 @@ class CsvReaderTest extends TestCase
     }
 
     /** @test */
+    public function it_results_instances_of_std_class_when_toObject_is_used()
+    {
+        $generator = $this->reader
+            ->keyByColumnName()
+            ->toObject()
+            ->read();
+
+        foreach ($generator as $row) {
+            $this->assertInstanceOf('stdClass', $row);
+            $this->assertTrue(property_exists($row, 'column_name'));
+            $this->assertTrue(property_exists($row, 'count'));
+        }
+    }
+
+    /** @test */
     public function rows_should_not_be_encoded_if_encoding_used_the_same_the_encoding_requested()
     {
         $generator = Csv::fakeReader([

@@ -6,6 +6,7 @@ use Generator;
 use Illuminate\Support\Str;
 use InvalidArgumentException;
 use SplFileObject;
+use stdClass;
 
 class Reader implements Readable, CsvReadable
 {
@@ -20,6 +21,8 @@ class Reader implements Readable, CsvReadable
     private bool $skip_headings = true;
 
     private bool $key_by_column_name = false;
+
+    private bool $to_object = false;
 
     private ?array $headings = null;
 
@@ -37,33 +40,6 @@ class Reader implements Readable, CsvReadable
         );
 
         $this->file = $file;
-    }
-
-    public static function fake(array $lines, ?int $maxMemory = null): CsvReadable
-    {
-        return new static(File::fake($lines, $maxMemory));
-    }
-
-    public static function setFile(SplFileObject $file): CsvReadable
-    {
-        return new static($file);
-    }
-
-    public function setToEncoding(string $to_encoding): CsvReadable
-    {
-        $this->to_encoding = $to_encoding;
-
-        return $this;
-    }
-
-    /**
-     * Must include the encoding that will be used to fix
-     * the current file
-     *
-     */
-    public function setSearchEncodings(array $encodings)
-    {
-        $this->search_encodings = $encodings;
     }
 
     /**
@@ -104,21 +80,57 @@ class Reader implements Readable, CsvReadable
         }
     }
 
-    public function withHeadings(): CsvReadable
+    public static function fake(array $lines, ?int $maxMemory = null): self
+    {
+        return new static(File::fake($lines, $maxMemory));
+    }
+
+    public static function setFile(SplFileObject $file): self
+    {
+        return new static($file);
+    }
+
+    public function setToEncoding(string $to_encoding): self
+    {
+        $this->to_encoding = $to_encoding;
+
+        return $this;
+    }
+
+    /**
+     * Must include the encoding that will be used to fix
+     * the current file
+     *
+     */
+    public function setSearchEncodings(array $encodings): self
+    {
+        $this->search_encodings = $encodings;
+
+        return $this;
+    }
+
+    public function withHeadings(): self
     {
         $this->skip_headings = false;
 
         return $this;
     }
 
-    public function keyByColumnName(): CsvReadable
+    public function keyByColumnName(): self
     {
         $this->key_by_column_name = true;
 
         return $this;
     }
 
-    public function setDelimiter(string $delimiter): CsvReadable
+    public function toObject(): self
+    {
+        $this->to_object = true;
+
+        return $this;
+    }
+
+    public function setDelimiter(string $delimiter): self
     {
         $this->delimiter = $delimiter;
 
@@ -140,7 +152,7 @@ class Reader implements Readable, CsvReadable
             ->snake();
     }
 
-    protected function handleMappingSetting(int $index, array $row): array
+    protected function handleMappingSetting(int $index, array $row): array|stdClass
     {
         if ($index === 1 && $this->key_by_column_name) {
             $this->setHeadings($row);
@@ -152,7 +164,7 @@ class Reader implements Readable, CsvReadable
     /**
      * @throws InvalidArgumentException
      */
-    protected function mapFields(array $row): array
+    protected function mapFields(array $row): array|stdClass
     {
         if (! $this->key_by_column_name) {
             return $row;
@@ -165,7 +177,13 @@ class Reader implements Readable, CsvReadable
                 'Reader::mapFields failed'
             );
 
-            return array_combine($this->headings, $row);
+            $row = array_combine($this->headings, $row);
+
+            if ($this->to_object) {
+                $row = (object) $row;
+            }
+
+            return $row;
         }
     }
 
