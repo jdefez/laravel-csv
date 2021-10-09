@@ -6,11 +6,10 @@ use Generator;
 use Illuminate\Support\Str;
 use InvalidArgumentException;
 use SplFileObject;
-use SplTempFileObject;
 
 class Reader implements Readable, CsvReadable
 {
-    public SplFileObject|SplTempFileObject $file;
+    public SplFileObject $file;
 
     private string $delimiter = ';';
 
@@ -26,9 +25,9 @@ class Reader implements Readable, CsvReadable
 
     private ?string $to_encoding = null;
 
-    private array $search_encodings = ['ISO-8859-1', 'ISO-8859-15', 'UTF-8'];
+    private array $search_encodings = ['UTF-8', 'ISO-8859-15', 'ISO-8859-1'];
 
-    public function __construct(SplFileObject $file)
+    final public function __construct(SplFileObject $file)
     {
         $file->setFlags(
             SplFileObject::READ_CSV
@@ -42,12 +41,12 @@ class Reader implements Readable, CsvReadable
 
     public static function fake(array $lines, ?int $maxMemory = null): CsvReadable
     {
-        return new self(File::fake($lines, $maxMemory));
+        return new static(File::fake($lines, $maxMemory));
     }
 
     public static function setFile(SplFileObject $file): CsvReadable
     {
-        return new self($file);
+        return new static($file);
     }
 
     public function setToEncoding(string $to_encoding): CsvReadable
@@ -58,8 +57,6 @@ class Reader implements Readable, CsvReadable
     }
 
     /**
-     * @var $encodings array
-     *
      * Must include the encoding that will be used to fix
      * the current file
      *
@@ -128,15 +125,22 @@ class Reader implements Readable, CsvReadable
         return $this;
     }
 
-    private function setHeadings(array $row)
+    protected function setHeadings(array $row)
     {
-        $this->headings = array_map(
-            fn ($item) => (string) Str::of($item)->lower()->snake()->ascii(),
-            $row
-        );
+        $this->headings = array_map(fn ($item) => $this->snake($item), $row);
     }
 
-    private function handleMappingSetting(int $index, array $row): array
+    public function snake(string $string): string
+    {
+        return (string) Str::of($string)
+            ->replace(['\''], [' ', ' '])
+            ->remove([',', ';', '.', '"'])
+            ->lower()
+            ->ascii()
+            ->snake();
+    }
+
+    protected function handleMappingSetting(int $index, array $row): array
     {
         if ($index === 1 && $this->key_by_column_name) {
             $this->setHeadings($row);
@@ -148,7 +152,7 @@ class Reader implements Readable, CsvReadable
     /**
      * @throws InvalidArgumentException
      */
-    private function mapFields(array $row): array
+    protected function mapFields(array $row): array
     {
         if (! $this->key_by_column_name) {
             return $row;
@@ -168,7 +172,7 @@ class Reader implements Readable, CsvReadable
     /**
      * @throws InvalidArgumentException
      */
-    private function handleFixEncoding(array $row): array
+    protected function handleFixEncoding(array $row): array
     {
         if (!in_array($this->to_encoding, $this->search_encodings)) {
             throw new InvalidArgumentException(
@@ -176,24 +180,31 @@ class Reader implements Readable, CsvReadable
             );
         }
 
-        $from_encoding = mb_detect_encoding(
-            $this->file->current()[0],
-            $this->search_encodings
-        );
+        $from_encoding = $this->currentEncoding($this->file->current()[0]);
 
-        if ($from_encoding
-            && $from_encoding !== $this->to_encoding
-        ) {
-            return array_map(
-                fn ($item) => $this->encode($item, $from_encoding),
-                $row
-            );
+        if (! $from_encoding || ! $this->needEncoding($from_encoding)) {
+            return $row;
         }
 
-        return $row;
+        return $this->encodeRow($row, $from_encoding);
     }
 
-    public function encode(?string $string = null, string $from_encoding)
+    protected function currentEncoding(string $string): bool|string
+    {
+        return mb_detect_encoding($string, $this->search_encodings);
+    }
+
+    public function encodeRow(array $row, string $from_encoding): array
+    {
+        return array_map(fn ($item) => $this->encode($item, $from_encoding), $row);
+    }
+
+    protected function needEncoding(string $from_encoding): bool
+    {
+        return $from_encoding !== $this->to_encoding;
+    }
+
+    protected function encode(?string $string = null, string $from_encoding)
     {
         if ($string) {
             return mb_convert_encoding(

@@ -6,6 +6,7 @@ use Generator;
 use Jdefez\LaravelCsv\Csv\CsvReadable;
 use Jdefez\LaravelCsv\Facades\Csv;
 use Jdefez\LaravelCsv\Tests\TestCase;
+use SplFileObject;
 
 class CsvReaderTest extends TestCase
 {
@@ -83,6 +84,39 @@ class CsvReaderTest extends TestCase
         foreach ($generator as $row) {
             $this->assertArrayHasKey('column_name', $row);
             $this->assertArrayHasKey('count', $row);
+        }
+    }
+
+    /** @test */
+    public function rows_should_not_be_encoded_if_encoding_used_the_same_the_encoding_requested()
+    {
+        $generator = Csv::fakeReader([
+            'name;count',
+            'féé;1',
+        ])->setToEncoding('UTF-8')
+          ->keyByColumnName()
+          ->read();
+
+        foreach ($generator as $row) {
+            $this->assertEquals('féé', $row['name']);
+        }
+    }
+
+    /** @test */
+    public function it_converts_iso_859_1_to_utf_8()
+    {
+        $reader = Csv::reader(
+            new SplFileObject(__DIR__ . '/../Stubs/iso-859-1.csv', 'r')
+        );
+
+        $generator = $reader->setToEncoding('UTF-8')
+            ->keyByColumnName()
+            ->read();
+
+        foreach ($generator as $row) {
+            $this->assertArrayHasKey('prenom', $row, implode(';', array_keys($row)));
+            $this->assertArrayHasKey('nom_d_usage', $row, implode(';', array_keys($row)));
+            $this->assertEquals('clémentine', $row['prenom']);
         }
     }
 }
