@@ -50,7 +50,7 @@ class Reader implements Readable, CsvReadable
         $index = 0;
 
         while (! $this->file->eof()) {
-            ++$index;
+            $index++;
 
             $row = $this->file->fgetcsv(
                 $this->delimiter,
@@ -98,9 +98,8 @@ class Reader implements Readable, CsvReadable
     }
 
     /**
-     * Must include the encoding that will be used to fix
-     * the current file
-     *
+     * Ordered array of encodings to check when determing the actual line encoding
+     * It must include the encoding that will be used to fix the current file
      */
     public function setSearchEncodings(array $encodings): self
     {
@@ -142,7 +141,7 @@ class Reader implements Readable, CsvReadable
         $this->headings = array_map(fn ($item) => $this->snake($item), $row);
     }
 
-    public function snake(string $string): string
+    protected function snake(string $string): string
     {
         return (string) Str::of($string)
             ->replace(['\''], [' ', ' '])
@@ -212,7 +211,7 @@ class Reader implements Readable, CsvReadable
         return mb_detect_encoding($string, $this->search_encodings);
     }
 
-    public function encodeRow(array $row, string $from_encoding): array
+    protected function encodeRow(array $row, string $from_encoding): array
     {
         return array_map(fn ($item) => $this->encode($item, $from_encoding), $row);
     }
