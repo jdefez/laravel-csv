@@ -4,11 +4,10 @@ namespace Jdefez\LaravelCsv\Csv;
 
 use Illuminate\Support\Collection;
 use SplFileObject;
-use SplTempFileObject;
 
 class Writer implements Writable, CsvWritable
 {
-    public SplFileObject|SplTempFileObject $file;
+    public SplFileObject $file;
 
     private array $columns = [];
 
@@ -20,19 +19,19 @@ class Writer implements Writable, CsvWritable
 
     private ?string $escape = '\\';
 
-    public function __construct(SplFileObject $file)
+    final public function __construct(SplFileObject $file)
     {
         $this->file = $file;
     }
 
-    public static function setFile(SplFileObject $file): CsvWritable
+    public static function setFile(SplFileObject $file): self
     {
-        return new self($file);
+        return new static($file);
     }
 
-    public static function fake(?int $maxMemory = null): CsvWritable
+    public static function fake(?int $maxMemory = null): self
     {
-        return new self(File::fake(null, $maxMemory));
+        return new static(File::fake(null, $maxMemory));
     }
 
     public function setData(Collection $data): CsvWritable
@@ -53,32 +52,37 @@ class Writer implements Writable, CsvWritable
                 $row = $mapping($row);
             }
 
-            $this->putRow(array_values($row));
+            $this->putRow($row);
         });
     }
 
-    public function setDelimiter(string $delimiter): CsvWritable
+    public function put(array $row): void
+    {
+        $this->putRow($row);
+    }
+
+    public function setDelimiter(string $delimiter): self
     {
         $this->delimiter = $delimiter;
 
         return $this;
     }
 
-    public function setEnclosure(string $enclosure): CsvWritable
+    public function setEnclosure(string $enclosure): self
     {
         $this->enclosure = $enclosure;
 
         return $this;
     }
 
-    public function setEscape(string $escape): CsvWritable
+    public function setEscape(string $escape): self
     {
         $this->escape = $escape;
 
         return $this;
     }
 
-    public function setColumns(array $columns): CsvWritable
+    public function setColumns(array $columns): self
     {
         $this->columns = $columns;
 
@@ -88,7 +92,7 @@ class Writer implements Writable, CsvWritable
     protected function putRow(array $values): void
     {
         $this->file->fputcsv(
-            $values,
+            array_values($values),
             $this->delimiter,
             $this->enclosure,
             $this->escape

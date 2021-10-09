@@ -28,11 +28,12 @@ class CsvWriterTest extends TestCase
     }
 
     /** @test */
-    public function it_generates_a_csv_file()
+    public function it_generates_a_csv_file_from_a_collection()
     {
         $this->writer->write();
 
         $results = $this->lines->toArray();
+
         foreach ($this->writer->file as $line) {
             $expected = implode(';', array_shift($results)) . PHP_EOL;
             $this->assertEquals($expected, $line);
@@ -40,7 +41,7 @@ class CsvWriterTest extends TestCase
     }
 
     /** @test */
-    public function it_maps_data()
+    public function it_maps_collection_data()
     {
         $this->writer->write(fn ($item) => [
             $item['name'],
@@ -52,6 +53,7 @@ class CsvWriterTest extends TestCase
             ['bar', 4],
             ['baz', 6],
         ];
+
         foreach ($this->writer->file as $line) {
             $expected = implode(';', array_shift($results)) . PHP_EOL;
             $this->assertEquals($expected, $line);
@@ -66,9 +68,32 @@ class CsvWriterTest extends TestCase
 
         $results = $this->lines->toArray();
         array_unshift($results, $columns);
+
         foreach ($this->writer->file as $line) {
             $expected = implode(';', array_shift($results)) . PHP_EOL;
             $this->assertEquals($expected, $line);
         }
+    }
+
+    /** @test */
+    public function it_can_put_one_line_to_the_file()
+    {
+        $delimiter = ',';
+        $writer = Csv::fakeWriter()
+            ->setDelimiter($delimiter);
+
+        foreach ($this->lines as $line) {
+            $writer->put($line);
+        }
+
+        $count = 0;
+        foreach ($writer->file as $line) {
+            $expected = implode($delimiter, $this->lines[$count]) . PHP_EOL;
+            $this->assertEquals($expected, $line);
+
+            $count++;
+        }
+
+        $this->assertEquals($this->lines->count(), $count);
     }
 }

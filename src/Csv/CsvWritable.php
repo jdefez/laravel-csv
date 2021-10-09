@@ -15,6 +15,8 @@ interface CsvWritable
 
     public function write(?callable $mapping = null): void;
 
+    public function put(array $row): void;
+
     public function setDelimiter(string $delimiter): CsvWritable;
 
     public function setEnclosure(string $enclosure): CsvWritable;
