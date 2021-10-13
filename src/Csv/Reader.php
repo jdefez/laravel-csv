@@ -39,6 +39,8 @@ class Reader implements Readable, CsvReadable
             | SplFileObject::DROP_NEW_LINE
         );
 
+        $file->setCsvControl(';');
+
         $this->file = $file;
     }
 

@@ -21,7 +21,7 @@ class CsvReaderTest extends TestCase
             'foo;1',
             'bar;2',
             'baz;3',
-        ])->setDelimiter(';');
+        ]);
     }
 
     /** @test */
@@ -135,14 +135,13 @@ class CsvReaderTest extends TestCase
     /** @test */
     public function rows_should_not_be_encoded_if_encoding_is_the_same_as_the_requested_encoding()
     {
-        $generator = Csv::fakeReader([
+        $reader = Csv::fakeReader([
             'name;count',
             'féé;1',
         ])->setToEncoding('UTF-8')
-          ->keyByColumnName()
-          ->read();
+          ->keyByColumnName();
 
-        foreach ($generator as $row) {
+        foreach ($reader->read() as $row) {
             $this->assertEquals('féé', $row['name']);
         }
     }
