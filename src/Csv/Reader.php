@@ -12,11 +12,11 @@ class Reader implements Readable, CsvReadable
 {
     public SplFileObject $file;
 
-    private string $delimiter = ';';
+    //private string $delimiter = ';';
 
-    private string $enclosure = ' ';
+    //private string $enclosure = ' ';
 
-    private ?string $escape = '\\';
+    //private ?string $escape = '\\';
 
     private bool $skip_headings = true;
 
@@ -49,34 +49,28 @@ class Reader implements Readable, CsvReadable
     {
         $index = 0;
 
-        while (! $this->file->eof()) {
+        foreach ($this->file as $line) {
             $index++;
 
-            $row = $this->file->fgetcsv(
-                $this->delimiter,
-                $this->enclosure,
-                $this->escape
-            );
-
-            if (! is_array($row)) {
+            if (! is_array($line)) {
                 continue;
             }
 
             if (! is_null($this->to_encoding)) {
-                $row = $this->handleFixEncoding($row);
+                $line = $this->handleFixEncoding($line);
             }
 
-            $row = $this->handleMappingSetting($index, $row);
+            $line = $this->handleMappingSetting($index, $line);
 
             if ($this->skip_headings && $index === 1) {
                 continue;
             }
 
             if ($callback && is_callable($callback)) {
-                $row = $callback($row);
+                $line = $callback($line);
             }
 
-            yield $row;
+            yield $line;
         }
     }
 
@@ -129,9 +123,9 @@ class Reader implements Readable, CsvReadable
         return $this;
     }
 
-    public function setDelimiter(string $delimiter): self
+    public function setDelimiter(string $separator = ",", string $enclosure = "\"", string $escape = "\\"): self
     {
-        $this->delimiter = $delimiter;
+        $this->file->setCsvControl($separator, $enclosure, $escape);
 
         return $this;
     }
