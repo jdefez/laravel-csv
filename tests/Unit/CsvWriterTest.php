@@ -3,13 +3,14 @@
 namespace Jdefez\LaravelCsv\Tests\Unit;
 
 use Illuminate\Support\Collection;
-use Jdefez\LaravelCsv\Csv\CsvWritable;
+use Jdefez\LaravelCsv\Csv\Writable;
 use Jdefez\LaravelCsv\Facades\Csv;
 use Jdefez\LaravelCsv\Tests\TestCase;
+use SplTempFileObject;
 
 class CsvWriterTest extends TestCase
 {
-    private CsvWritable $writer;
+    private Writable $writer;
 
     private Collection $lines;
 
@@ -25,6 +26,14 @@ class CsvWriterTest extends TestCase
 
         $this->writer = Csv::fakeWriter()
             ->setData($this->lines);
+    }
+
+    /** @test */
+    public function it_returns_an_instance_of_Writable()
+    {
+        $file = new SplTempFileObject();
+        $writer = Csv::writer($file);
+        $this->assertInstanceOf(Writable::class, $writer);
     }
 
     /** @test */

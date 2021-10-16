@@ -3,14 +3,15 @@
 namespace Jdefez\LaravelCsv\Tests\Unit;
 
 use Generator;
-use Jdefez\LaravelCsv\Csv\CsvReadable;
+use Jdefez\LaravelCsv\Csv\Readable;
 use Jdefez\LaravelCsv\Facades\Csv;
 use Jdefez\LaravelCsv\Tests\TestCase;
 use SplFileObject;
+use SplTempFileObject;
 
 class CsvReaderTest extends TestCase
 {
-    private CsvReadable $reader;
+    private Readable $reader;
 
     public function setUp(): void
     {
@@ -22,6 +23,14 @@ class CsvReaderTest extends TestCase
             'bar;2',
             'baz;3',
         ]);
+    }
+
+    /** @test */
+    public function it_returns_an_instance_of_Readable()
+    {
+        $file = new SplTempFileObject();
+        $reader = Csv::reader($file);
+        $this->assertInstanceOf(Readable::class, $reader);
     }
 
     /** @test */

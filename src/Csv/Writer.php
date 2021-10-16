@@ -5,7 +5,7 @@ namespace Jdefez\LaravelCsv\Csv;
 use Illuminate\Support\Collection;
 use SplFileObject;
 
-class Writer implements Writable, CsvWritable
+class Writer implements Writable
 {
     public SplFileObject $file;
 
@@ -34,7 +34,7 @@ class Writer implements Writable, CsvWritable
         return new static(File::fake(null, $maxMemory));
     }
 
-    public function setData(Collection $data): CsvWritable
+    public function setData(Collection $data): self
     {
         $this->data = $data;
 

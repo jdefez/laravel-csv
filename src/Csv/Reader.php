@@ -8,15 +8,9 @@ use InvalidArgumentException;
 use SplFileObject;
 use stdClass;
 
-class Reader implements Readable, CsvReadable
+class Reader implements Readable
 {
     public SplFileObject $file;
-
-    //private string $delimiter = ';';
-
-    //private string $enclosure = ' ';
-
-    //private ?string $escape = '\\';
 
     private bool $skip_headings = true;
 
