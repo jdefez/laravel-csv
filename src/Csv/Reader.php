@@ -187,7 +187,7 @@ class Reader implements Readable
             );
         }
 
-        $from_encoding = $this->currentEncoding($this->file->current()[0]);
+        $from_encoding = $this->currentEncoding(join('', $this->file->current()));
 
         if (! $from_encoding || ! $this->needEncoding($from_encoding)) {
             return $row;
