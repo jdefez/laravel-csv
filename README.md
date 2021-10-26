@@ -1,15 +1,15 @@
 
-#laravel-csv
+# laravel-csv
 
 This package provides a Laravel Facade for writing/Reading Csv files.
 
-##Installation
+## Installation
 
 ```bash
 $ composer require jdefez/laravel-csv
 ```
 
-##Reading a Csv file
+## Reading a Csv file
 
 Basic usage
 
@@ -33,16 +33,17 @@ $reader = Csv::reader(new SplFileObject('path-to-my-file', 'r'))
   ->withHeadings();
 ```
 
-##Writing in a Csv file
+## Writing in a Csv file
 
 ```php
 // todo
 ```
 
-##Testing
+## Testing
 
-##Todo:
+## Todo:
 
+ - Finish the documentation page.
  - Check the package auto discovery works well.
 
 **Reader:**
