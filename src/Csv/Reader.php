@@ -147,8 +147,11 @@ class Reader implements Readable
     /**
      * Sets the delimiter, enclosure and escape to be used to parse the file.
      */
-    public function setDelimiter(string $separator = ",", string $enclosure = "\"", string $escape = "\\"): self
-    {
+    public function setDelimiter(
+        string $separator = ",",
+        string $enclosure = "\"",
+        string $escape = "\\"
+    ): self {
         $this->file->setCsvControl($separator, $enclosure, $escape);
 
         return $this;
