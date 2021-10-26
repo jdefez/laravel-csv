@@ -4,7 +4,10 @@
   "type": "package",
   "license": "MIT",
   "keywords": [
-    "laravel", "csv", "reader", "writer"
+    "laravel",
+    "csv",
+    "reader",
+    "writer"
   ],
   "require": {
     "php": "^8.0",
@@ -31,5 +34,15 @@
       "email": "jdefez@gmail.com"
     }
   ],
-  "minimum-stability": "dev"
+  "minimum-stability": "dev",
+  "extra": {
+    "laravel": {
+      "providers": [
+        "Jdefez\\LaravelCsv\\CsvServiceProvider"
+      ],
+      "aliases": {
+        "Csv": "Jdefez\\LaravelCsv\\Facades\\Csv"
+      }
+    }
+  }
 }
