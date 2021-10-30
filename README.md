@@ -96,6 +96,27 @@ foreach ($reader->read() as $row) {
 }
 ```
 
+### Mapping data
+
+If you need a more sophisticated way to map data than simple casting.
+You could use `Reader::read(?callable $callback = null): Generator`
+
+```php
+$iterator = Csv::reader(new SplFileObject('path-to-my-file.csv', 'r'))
+  ->toObject()
+  ->read(fn ($item) => UserDataBuilder::make(
+    $item->firstname,
+    $item->lastname,
+    $item->date_of_birth,
+  );
+
+foreach ($iterator as $userData) {
+  if ($userData->isValid()) {
+    User::create($userData);
+  }
+}
+```
+
 ### Fixing enconding
 
 For this feature to work, you need to provide a list of expected encodings.
