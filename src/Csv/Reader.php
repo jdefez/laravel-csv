@@ -96,6 +96,8 @@ class Reader implements Readable
     {
         $this->to_encoding = $to_encoding;
 
+        $this->addEncodingToSearchEncodings($to_encoding);
+
         return $this;
     }
 
@@ -207,17 +209,8 @@ class Reader implements Readable
         }
     }
 
-    /**
-     * @throws InvalidArgumentException
-     */
     protected function handleFixEncoding(array $row): array
     {
-        if (!in_array($this->to_encoding, $this->search_encodings)) {
-            throw new InvalidArgumentException(
-                'Reader::$to_encoding must be part of Reader::$search_encodings'
-            );
-        }
-
         $from_encoding = $this->currentEncoding(join('', $this->file->current()));
 
         if (! $from_encoding || ! $this->needEncoding($from_encoding)) {
@@ -253,5 +246,15 @@ class Reader implements Readable
         }
 
         return $string;
+    }
+
+    private function addEncodingToSearchEncodings(string $to_encoding): void
+    {
+        if (!in_array($to_encoding, $this->search_encodings)) {
+            $this->search_encodings = array_unshift(
+                $this->search_encodings,
+                $to_encoding
+            );
+        }
     }
 }
