@@ -60,9 +60,9 @@ $reader = Csv::reader(new SplFileObject('path-to-my-file.csv', 'r'))
 foreach ($reader->read() as $row) {
 
   //array(
-  //    'firstname' => 'Jacky',
-  //    'lastname' => 'Terror',
-  //    'date_of_birth' => '1875-02-12'
+  //    "firstname" => "Jacky",
+  //    "lastname" => "Terror",
+  //    "date_of_birth" => "1875-02-12"
   //)
 
   //...
@@ -87,7 +87,7 @@ $reader = Csv::reader(new SplFileObject('path-to-my-file.csv', 'r'))
 foreach ($reader->read() as $row) {
 
   //object(stdClass)#277 (2) {
-  //    ["firstname"]=> string(4) "Jack"
+  //    ["firstname"]=> string(4) "Jacky"
   //    ["lastname"]=> string(5) "Terror"
   //    ["date_of_birth"]=> string(13) "1875-02-12"
   //}
