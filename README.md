@@ -82,13 +82,14 @@ foreach ($reader->read() as $row) {
 
 ### Fixing enconding
 
+You need to provide a list of encodings that will be used to detect the current
+encoding. By default the Reader uses: `['ISO-8859-15', 'ISO-8859-1']`
+
 ```php
 
 // Fixing encoding from ISO to UTF-8
 
 $reader = $reader->setToEncoding('UTF-8')
-    // You need to provide a list of encoding that will be used to detect the
-    //   current encoding. By default the Reader uses the list bellow
     ->setSearchEncodings(['ISO-8859-15', 'ISO-8859-1'])
     ->toObject();
 
@@ -109,3 +110,8 @@ $reader = $reader->setToEncoding('UTF-8')
  - Adding the ability to setup headings names. It could be a convinient way to
    map data. Especialy if we want to key by columns names or cast rows to
    stdClass when there are no columns names at all.
+
+**Writer:**
+
+ - Writing to a given encoding
+
