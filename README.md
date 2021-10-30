@@ -11,7 +11,7 @@ $ composer require jdefez/laravel-csv
 ## Reading a Csv file
 
 This utility class does not take hold of any data. It simply provides an
-iterator that you can use to read your csv files.
+iterator you can use to read your csv files.
 
 ### Basic usage
 
@@ -43,13 +43,13 @@ $reader = Csv::reader(new SplFileObject('path-to-my-file.csv', 'r'))
 ### Reader::keyByColumnName()
 
 The rows will be returned under the form of an associative arrays with the
-columns names as keys. The columns names will be kamel cased.
+camel cased columns names as keys.
 
 ```php
 // Given a file
 //
 // lastname;firstname;date of birth
-// Jacky;Freek;1875-02-12
+// Jacky;Terror;1875-02-12
 
 $reader = Csv::reader(new SplFileObject('path-to-my-file.csv', 'r'))
   ->keyByColumnName()
@@ -58,7 +58,7 @@ foreach ($reader->read() as $row) {
 
   //array(
   //    'firstname' => 'Jacky',
-  //    'lastname' => 'Freek',
+  //    'lastname' => 'Terror',
   //    'date_of_birth' => '1875-02-12'
   //)
 
@@ -67,14 +67,13 @@ foreach ($reader->read() as $row) {
 
 ### Reader::toObject()
 
-The rows will be casted to object using the column names as properties.
-The columns names will be kamel cased.
+The rows will be casted to object using the kamel cased column names as properties.
 
 ```php
 // Given a file
 //
 // lastname;firstname;birthdate
-// Jacky;Freek;1875-02-12
+// Jacky;Terror;1875-02-12
 
 $reader = Csv::reader(new SplFileObject('path-to-my-file.csv', 'r'))
   ->toObject()
@@ -83,7 +82,7 @@ foreach ($reader->read() as $row) {
 
   //object(stdClass)#277 (2) {
   //    ["firstname"]=> string(4) "Jack"
-  //    ["lastname"]=> string(5) "Freek"
+  //    ["lastname"]=> string(5) "Terror"
   //    ["date_of_birth"]=> string(13) "1875-02-12"
   //}
 
@@ -92,9 +91,9 @@ foreach ($reader->read() as $row) {
 
 ### Fixing enconding
 
-For this feature to work, you need to provide a list of encodings that will be
-used to detect the current encoding. By default the Reader uses:
-`['ISO-8859-15', 'ISO-8859-1']`
+For this feature to work, you need to provide a list of expected encodings.
+They will be used to detect the current line encoding and if it has to be
+fixed. By default the Reader uses: `['ISO-8859-15', 'ISO-8859-1']`
 
 ```php
 
@@ -108,11 +107,11 @@ $reader = $reader->setToEncoding('UTF-8')
 
 ## Writing a Csv file
 
-### Writing a entire collection of data
+### Writing an entire collection of data
 
 ```php
 $collection = collect([
-  ['Jack', 'Freek', '1875-02-12'],
+  ['Jacky', 'Terror', '1875-02-12'],
   ['Julian', 'Nightmare', '1815-11-11'],
   // ...
 ]);
@@ -129,7 +128,7 @@ Csv::writer()
 ```php
 $collection = collect([
   ['firstname', 'lastname', 'date_of_birth'],
-  ['Jack', 'Freek', '1875-02-12'],
+  ['Jacky', 'Terror', '1875-02-12'],
   ['Julian', 'Nightmare', '1815-11-11'],
   // ...
 ]);
@@ -179,5 +178,4 @@ $models->each(fn ($model) => $writer->put(fn () => [
 **Writer:**
 
  - Writing to a given encoding
- - Writer::put should also take an array or a callable as parameter
 
