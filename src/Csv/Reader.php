@@ -39,6 +39,9 @@ class Reader implements Readable
     }
 
     /**
+     * Returns a generator that can be used to iterate over the file rows. When
+     * provided the callable is applyed to each row.
+     *
      * @throws InvalidArgumentException
      */
     public function read(?callable $callback = null): Generator
@@ -70,26 +73,38 @@ class Reader implements Readable
         }
     }
 
+    /**
+     * Returns a new Reader instanciated with a SplTempFileObject
+     */
     public static function fake(array $lines, ?int $maxMemory = null): self
     {
         return new static(File::fake($lines, $maxMemory));
     }
 
+    /**
+     * Returns a new instance with the given SplFileObject
+     */
     public static function setFile(SplFileObject $file): self
     {
         return new static($file);
     }
 
+    /**
+     * Sets the encoding that will be used to encode the rows to when needed
+     */
     public function setToEncoding(string $to_encoding): self
     {
         $this->to_encoding = $to_encoding;
+
+        $this->addEncodingToSearchEncodings($to_encoding);
 
         return $this;
     }
 
     /**
-     * Ordered array of encodings to check when determing the actual line encoding
-     * It must include the encoding that will be used to fix the current file
+     * An ordered array of encodings to check when determing the actual row
+     * encoding. It must include the encoding that will be used to fix the
+     * current file.
      */
     public function setSearchEncodings(array $encodings): self
     {
@@ -98,6 +113,10 @@ class Reader implements Readable
         return $this;
     }
 
+    /**
+     * By default the first row is skipped. Use this method to include the
+     * first row.
+     */
     public function withHeadings(): self
     {
         $this->skip_headings = false;
@@ -105,6 +124,9 @@ class Reader implements Readable
         return $this;
     }
 
+    /**
+     * The array of cells returned is keyed with the corresponding columns names.
+     */
     public function keyByColumnName(): self
     {
         $this->key_by_column_name = true;
@@ -112,15 +134,26 @@ class Reader implements Readable
         return $this;
     }
 
+    /**
+     * Converts each rows to an object. Its properties are the snake cased
+     * column names.
+     */
     public function toObject(): self
     {
+        $this->key_by_column_name = true;
         $this->to_object = true;
 
         return $this;
     }
 
-    public function setDelimiter(string $separator = ",", string $enclosure = "\"", string $escape = "\\"): self
-    {
+    /**
+     * Sets the delimiter, enclosure and escape to be used to parse the file.
+     */
+    public function setDelimiter(
+        string $separator = ",",
+        string $enclosure = "\"",
+        string $escape = "\\"
+    ): self {
         $this->file->setCsvControl($separator, $enclosure, $escape);
 
         return $this;
@@ -176,17 +209,8 @@ class Reader implements Readable
         }
     }
 
-    /**
-     * @throws InvalidArgumentException
-     */
     protected function handleFixEncoding(array $row): array
     {
-        if (!in_array($this->to_encoding, $this->search_encodings)) {
-            throw new InvalidArgumentException(
-                'Reader::$to_encoding must be part of Reader::$search_encodings'
-            );
-        }
-
         $from_encoding = $this->currentEncoding(join('', $this->file->current()));
 
         if (! $from_encoding || ! $this->needEncoding($from_encoding)) {
@@ -222,5 +246,15 @@ class Reader implements Readable
         }
 
         return $string;
+    }
+
+    private function addEncodingToSearchEncodings(string $to_encoding): void
+    {
+        if (!in_array($to_encoding, $this->search_encodings)) {
+            $this->search_encodings = array_unshift(
+                $this->search_encodings,
+                $to_encoding
+            );
+        }
     }
 }

@@ -28,17 +28,14 @@ class CsvReaderTest extends TestCase
     /** @test */
     public function it_returns_an_instance_of_Readable()
     {
-        $file = new SplTempFileObject();
-        $reader = Csv::reader($file);
+        $reader = Csv::reader(new SplTempFileObject());
         $this->assertInstanceOf(Readable::class, $reader);
     }
 
     /** @test */
     public function reader_read_method_returns_a_generator()
     {
-        $generator = $this->reader->read();
-
-        $this->assertInstanceOf(Generator::class, $generator);
+        $this->assertInstanceOf(Generator::class, $this->reader->read());
     }
 
     /** @test */
@@ -73,9 +70,8 @@ class CsvReaderTest extends TestCase
     /** @test */
     public function it_handles_a_callback_to_map_the_lines()
     {
+        // maping to stdClass
         $generator = $this->reader
-            ->keyByColumnName()
-            // maping to stdClass
             ->read(fn ($row) => (object) $row);
 
         foreach ($generator as $row) {
@@ -84,14 +80,10 @@ class CsvReaderTest extends TestCase
     }
 
     /** @test */
-    public function it_skips_headings()
+    public function it_skips_headings_by_default()
     {
-        $generator = $this->reader
-            ->keyByColumnName()
-            ->read();
-
         $count = 0;
-        foreach ($generator as $row) {
+        foreach ($this->reader->read() as $row) {
             $this->assertCount(2, $row);
             $count++;
         }
@@ -130,7 +122,6 @@ class CsvReaderTest extends TestCase
     public function it_results_instances_of_std_class_when_toObject_is_used()
     {
         $generator = $this->reader
-            ->keyByColumnName()
             ->toObject()
             ->read();
 
@@ -142,7 +133,7 @@ class CsvReaderTest extends TestCase
     }
 
     /** @test */
-    public function rows_should_not_be_encoded_if_encoding_is_the_same_as_the_requested_encoding()
+    public function rows_should_not_be_encoded_the_requested_encoding_matches_the_lines_encoding()
     {
         $reader = Csv::fakeReader([
             'name;count',

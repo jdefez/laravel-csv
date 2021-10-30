@@ -105,4 +105,36 @@ class CsvWriterTest extends TestCase
 
         $this->assertEquals($this->lines->count(), $count);
     }
+
+    /** @test */
+    public function put_method_can_handle_a_callable()
+    {
+        $delimiter = ',';
+        $writer = Csv::fakeWriter()
+            ->setDelimiter($delimiter);
+
+        foreach ($this->lines as $line) {
+            $writer->put(fn () => [
+                $line['name'] . ' updated',
+                $line['count'] + 1,
+            ]);
+        }
+
+        $count = 0;
+        foreach ($writer->file as $line) {
+            $value = $this->lines[$count];
+
+            $expected = sprintf(
+                '"%s updated",%d',
+                $value['name'],
+                $value['count'] + 1
+            ) . PHP_EOL;
+
+            $this->assertEquals($expected, $line);
+
+            $count++;
+        }
+
+        $this->assertEquals($this->lines->count(), $count);
+    }
 }
