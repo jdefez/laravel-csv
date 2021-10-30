@@ -26,7 +26,8 @@ foreach ($reader->read() as $row) {
 
 ### Reading the first row
 
-By default the first row is skipped. If you the first row use `$reader->withHeadings()` method.
+By default the first row is skipped. If you need to read the first row use
+`$reader->withHeadings()` method.
 
 ```php
 $reader = Csv::reader(new SplFileObject('path-to-my-file', 'r'))
@@ -35,8 +36,8 @@ $reader = Csv::reader(new SplFileObject('path-to-my-file', 'r'))
 
 ### Reader::keyByColumnName()
 
-The resulting rows will be associative arrays with the columns names as keys.
-The columns names will be kamel cased.
+The rows will be returned under the form of associative arrays with the columns
+names as keys. The columns names will be kamel cased.
 
 ```php
 // Given a file
@@ -55,7 +56,7 @@ foreach ($reader->read() as $row) {
   //)
 }
 ```
-
+ 
 ### Reader::toObject()
 
 The rows will be casted to object using the column names as properties.
@@ -77,6 +78,20 @@ foreach ($reader->read() as $row) {
   //    ["date_of_birth"]=> string(13) "1875-02-12"
   //}
 }
+```
+
+### Fixing enconding
+
+```php
+
+// Fixing encoding from ISO to UTF-8
+
+$reader = $reader->setToEncoding('UTF-8')
+    // You need to provide a list of encoding that will be used to detect the
+    //   current encoding. By default the Reader uses the list bellow
+    ->setSearchEncodings(['ISO-8859-15', 'ISO-8859-1'])
+    ->toObject();
+
 ```
 
 ## Writing a Csv file
