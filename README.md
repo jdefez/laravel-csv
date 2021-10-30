@@ -98,7 +98,7 @@ foreach ($reader->read() as $row) {
 
 ### Mapping data
 
-If you need a more sophisticated way to map data than simple casting.
+If you need a more sophisticated way to map your file.
 You could use `Reader::read(?callable $callback = null): Generator`
 
 ```php
