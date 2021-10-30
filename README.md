@@ -15,18 +15,20 @@ iterator you can use to read your csv files.
 
 ### Basic usage
 
-You can both work with `SplFileObject` or `SplTempFileObject`.
-
 ```php
 
 use Jdefez\LaravelCsv\Facades\Csv;
 
-$reader = Csv::reader(new SplFileObject('path-to-my-file.csv', 'r'));
+$file = new SplFileObject('path-to-my-file.csv', 'r');
 
-foreach ($reader->read() as $row) {
+if ($file->isReadable()) {
+  $reader = Csv::reader($file);
 
-  // returns an array with the row's values
+  foreach ($reader->read() as $row) {
 
+    // returns an array with the row's values
+
+  }
 }
 ```
 
@@ -50,6 +52,7 @@ camel cased columns names as keys.
 //
 // lastname;firstname;date of birth
 // Jacky;Terror;1875-02-12
+// Julian;Nightmare;1815-11-11
 
 $reader = Csv::reader(new SplFileObject('path-to-my-file.csv', 'r'))
   ->keyByColumnName()
@@ -61,6 +64,8 @@ foreach ($reader->read() as $row) {
   //    'lastname' => 'Terror',
   //    'date_of_birth' => '1875-02-12'
   //)
+
+  //...
 
 }
 ```
@@ -74,6 +79,7 @@ The rows will be casted to object using the kamel cased column names as properti
 //
 // lastname;firstname;birthdate
 // Jacky;Terror;1875-02-12
+// Julian;Nightmare;1815-11-11
 
 $reader = Csv::reader(new SplFileObject('path-to-my-file.csv', 'r'))
   ->toObject()
@@ -86,6 +92,7 @@ foreach ($reader->read() as $row) {
   //    ["date_of_birth"]=> string(13) "1875-02-12"
   //}
 
+  // ...
 }
 ```
 
@@ -106,6 +113,11 @@ $reader = $reader->setToEncoding('UTF-8')
 ```
 
 ## Writing a Csv file
+
+You can both work with `SplFileObject` or `SplTempFileObject`.
+
+[This gist](https://gist.github.com/jdefez/e7624ec1b414bb82a430e3e5d29b59ec)
+demonstrates how you can use SplTempFileObject
 
 ### Writing an entire collection of data
 
