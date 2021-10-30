@@ -71,8 +71,12 @@ class Writer implements Writable
     /**
      * Writes a single row to the file
      */
-    public function put(array $row): void
+    public function put(array|callable $row): void
     {
+        if (is_callable($row)) {
+            $row = $row();
+        }
+
         $this->putRow($row);
     }
 
