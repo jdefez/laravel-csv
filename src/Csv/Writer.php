@@ -19,6 +19,8 @@ class Writer implements Writable
 
     private ?string $escape = '\\';
 
+    private ?string $eol = PHP_EOL;
+
     final public function __construct(SplFileObject $file)
     {
         $this->file = $file;
@@ -120,13 +122,24 @@ class Writer implements Writable
         return $this;
     }
 
+    /**
+     * Sets the eol to be used.
+     */
+    public function setEol(string $eol): self
+    {
+        $this->eol = $eol;
+
+        return $this;
+    }
+
     protected function putRow(array $values): void
     {
         $this->file->fputcsv(
             array_values($values),
             $this->delimiter,
             $this->enclosure,
-            $this->escape
+            $this->escape,
+            $this->eol
         );
     }
 }
