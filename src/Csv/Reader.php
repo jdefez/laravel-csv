@@ -167,8 +167,7 @@ class Reader implements Readable
     protected function snake(string $string): string
     {
         return (string) Str::of($string)
-            ->replace(['\''], [' ', ' '])
-            ->remove([',', ';', '.', '"'])
+            ->replaceMatches('/[^[:alnum:][:space:]]/', '')
             ->lower()
             ->ascii()
             ->snake();

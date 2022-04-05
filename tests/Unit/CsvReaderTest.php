@@ -18,7 +18,7 @@ class CsvReaderTest extends TestCase
         parent::setUp();
 
         $this->reader = Csv::fakeReader([
-            'column name;count',
+            'column/ name*;count',
             'foo;1',
             'bar;2',
             'baz;3',
