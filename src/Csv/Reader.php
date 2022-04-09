@@ -184,21 +184,22 @@ class Reader
 
     /**
      * @throws InvalidArgumentException
+     * @return array|stdClass|null
      */
-    protected function mapFields(array $row): array|stdClass
+    protected function mapFields(array $row)
     {
         if (! $this->key_by_column_name) {
             return $row;
         }
 
         if ($this->headings) {
+            $row = array_combine($this->headings, $row);
+
             throw_unless(
-                array_combine($this->headings, $row),
+                $row,
                 InvalidArgumentException::class,
                 'Reader::mapFields failed'
             );
-
-            $row = array_combine($this->headings, $row);
 
             if ($this->to_object) {
                 $row = (object) $row;
