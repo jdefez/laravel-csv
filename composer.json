@@ -1,6 +1,6 @@
 {
   "name": "jdefez/laravel-csv",
-  "description": "laravel facade to read/write csv file",
+  "description": "laravel utility class to read/write csv files",
   "type": "package",
   "license": "MIT",
   "keywords": [
@@ -35,14 +35,5 @@
     }
   ],
   "minimum-stability": "dev",
-  "extra": {
-    "laravel": {
-      "providers": [
-        "Jdefez\\LaravelCsv\\CsvServiceProvider"
-      ],
-      "aliases": {
-        "Csv": "Jdefez\\LaravelCsv\\Facades\\Csv"
-      }
-    }
-  }
+  "extra": { }
 }

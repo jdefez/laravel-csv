@@ -8,7 +8,7 @@ use InvalidArgumentException;
 use SplFileObject;
 use stdClass;
 
-class Reader implements Readable
+class Reader
 {
     public SplFileObject $file;
 

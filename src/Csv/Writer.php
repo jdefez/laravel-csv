@@ -5,7 +5,7 @@ namespace Jdefez\LaravelCsv\Csv;
 use Illuminate\Support\Collection;
 use SplFileObject;
 
-class Writer implements Writable
+class Writer
 {
     public SplFileObject $file;
 
@@ -19,7 +19,7 @@ class Writer implements Writable
 
     private ?string $escape = '\\';
 
-    private ?string $eol = PHP_EOL;
+    // private ?string $eol = PHP_EOL; (php@8.1 only)
 
     final public function __construct(SplFileObject $file)
     {
@@ -123,14 +123,14 @@ class Writer implements Writable
     }
 
     /**
-     * Sets the eol to be used.
+     * Sets the eol to be used. (php@8.1 only)
      */
-    public function setEol(string $eol): self
-    {
-        $this->eol = $eol;
+    // public function setEol(string $eol): self
+    // {
+    //     $this->eol = $eol;
 
-        return $this;
-    }
+    //     return $this;
+    // }
 
     protected function putRow(array $values): void
     {
@@ -139,7 +139,7 @@ class Writer implements Writable
             $this->delimiter,
             $this->enclosure,
             $this->escape,
-            $this->eol
+            // $this->eol (php@8.1 only)
         );
     }
 }
