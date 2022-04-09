@@ -167,10 +167,9 @@ class Reader
     protected function snake(string $string): string
     {
         return (string) Str::of($string)
-            ->replace(['\''], [' ', ' '])
-            ->remove([',', ';', '.', '"'])
-            ->lower()
             ->ascii()
+            ->replaceMatches('/[^[:alnum:][:space:]]/', ' ')
+            ->lower()
             ->snake();
     }
 
