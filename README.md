@@ -1,6 +1,6 @@
 # laravel-csv
 
-This package provides a Laravel Facade for writing/reading Csv files.
+This package provides Laravel Utility classes for writing/reading Csv files.
 
 ## Installation
 
@@ -17,17 +17,15 @@ iterator you can use to read your csv files.
 
 ```php
 
-use Jdefez\LaravelCsv\Facades\Csv;
+use Jdefez\LaravelCsv\Csv\Reader;
 
 $file = new SplFileObject('path-to-my-file.csv', 'r');
 
 if ($file->isReadable()) {
-  $reader = Csv::reader($file);
+  $reader = Reader::setFile($file);
 
   foreach ($reader->read() as $row) {
-
     // returns an array with the row's values
-
   }
 }
 ```
@@ -38,23 +36,23 @@ By default the first row is skipped. If you need to read the first row use
 `$reader->withHeadings()` method.
 
 ```php
-$reader = Csv::reader(new SplFileObject('path-to-my-file.csv', 'r'))
+$reader = Reader::setFile(new SplFileObject('path-to-my-file.csv', 'r'))
   ->withHeadings();
 ```
 
 ### Reader::keyByColumnName()
 
-The rows will be returned under the form of an associative arrays with the
+The rows will be returned under the form of an associative array using the
 camel cased columns names as keys.
 
 ```php
 // Given a file
-//
+
 // lastname;firstname;date of birth
 // Jacky;Terror;1875-02-12
 // Julian;Nightmare;1815-11-11
 
-$reader = Csv::reader(new SplFileObject('path-to-my-file.csv', 'r'))
+$reader = Reader::setFile(new SplFileObject('path-to-my-file.csv', 'r'))
   ->keyByColumnName()
 
 foreach ($reader->read() as $row) {
@@ -76,12 +74,12 @@ The rows will be casted to object using the kamel cased column names as properti
 
 ```php
 // Given a file
-//
+
 // lastname;firstname;birthdate
 // Jacky;Terror;1875-02-12
 // Julian;Nightmare;1815-11-11
 
-$reader = Csv::reader(new SplFileObject('path-to-my-file.csv', 'r'))
+$reader = Reader::setFile(new SplFileObject('path-to-my-file.csv', 'r'))
   ->toObject()
 
 foreach ($reader->read() as $row) {
@@ -102,19 +100,13 @@ If you need a more sophisticated way to map your file.
 You could use `Reader::read(?callable $callback = null): Generator`
 
 ```php
-$iterator = Csv::reader(new SplFileObject('path-to-my-file.csv', 'r'))
+$iterator = Reader::setFile(new SplFileObject('path-to-my-file.csv', 'r'))
   ->toObject()
-  ->read(fn ($item) => UserDataBuilder::make(
-    $item->firstname,
-    $item->lastname,
-    $item->date_of_birth,
-  );
-
-foreach ($iterator as $userData) {
-  if ($userData->isValid()) {
-    User::create($userData);
-  }
-}
+  ->read(function (stdClass $item) {
+    // $item->firstname,
+    // $item->lastname,
+    // $item->date_of_birth,
+  });
 ```
 
 ### Fixing enconding
@@ -149,8 +141,7 @@ $collection = collect([
   // ...
 ]);
 
-Csv::writer()
-  ->setFile(new SplFileObject('path-to-my-file.csv', 'w'))
+Writer::setFile(new SplFileObject('path-to-my-file.csv', 'w'))
   ->setColumns(['firstname', 'lastname', 'date of birth'])
   ->setData($collection)
   ->write();
@@ -166,7 +157,7 @@ $collection = collect([
   // ...
 ]);
 
-$writer = Csv::writer()->setFile(new SplFileObject('path-to-my-file.csv', 'w'));
+$writer = Writer::setFile(new SplFileObject('path-to-my-file.csv', 'w'));
 
 $collection->each(fn ($line) => $writer->put($line));
 
@@ -181,10 +172,9 @@ of `Writer::put(array|callable $row)`.
 
 $models = Users::all();
 
-$writer = Csv::writer(new SplFileObject('path-to-my-file.csv', 'w'));
-
-$writer->setData($models)
-  ->write(fn ($item) => [
+$writer = Writer::setFile(new SplFileObject('path-to-my-file.csv', 'w'))
+  ->setData($models)
+  ->write(fn (User $item) => [
     $item->firstname,
     $item->lastname,
     $item->birthday->format('Y-m-d')
@@ -192,7 +182,7 @@ $writer->setData($models)
 
 // Or iterate over the collection and append each line to the file.
 
-$models->each(fn ($model) => $writer->put(fn () => [
+$models->each(fn (User $model) => $writer->put(fn (User $model) => [
     $model->firstname,
     $model->lastname,
     $model->birthday->format('Y-m-d')
