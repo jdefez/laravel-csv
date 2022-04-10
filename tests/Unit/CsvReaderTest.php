@@ -3,72 +3,115 @@
 namespace Jdefez\LaravelCsv\Tests\Unit;
 
 use Generator;
-use Jdefez\LaravelCsv\Csv\Readable;
-use Jdefez\LaravelCsv\Facades\Csv;
+use InvalidArgumentException;
+use Jdefez\LaravelCsv\Csv\Reader;
 use Jdefez\LaravelCsv\Tests\TestCase;
 use SplFileObject;
 use SplTempFileObject;
 
 class CsvReaderTest extends TestCase
 {
-    private Readable $reader;
+    private Reader $reader;
+
+    private array $lines;
 
     public function setUp(): void
     {
         parent::setUp();
 
-        $this->reader = Csv::fakeReader([
-            'column name;count',
+        $this->lines = [
+            'column name*;count',
             'foo;1',
             'bar;2',
             'baz;3',
-        ]);
+        ];
+
+        $this->reader = Reader::fake($this->lines);
     }
 
     /** @test */
-    public function it_returns_an_instance_of_Readable()
+    public function it_returns_an_instance_of_Reader(): void
     {
-        $reader = Csv::reader(new SplTempFileObject());
-        $this->assertInstanceOf(Readable::class, $reader);
+        $reader = new Reader(new SplTempFileObject());
+        $this->assertInstanceOf(Reader::class, $reader);
     }
 
     /** @test */
-    public function reader_read_method_returns_a_generator()
+    public function reader_read_method_returns_a_generator(): void
     {
         $this->assertInstanceOf(Generator::class, $this->reader->read());
     }
 
     /** @test */
-    public function it_can_read_the_file()
+    public function it_can_read_a_given_file(): void
     {
-        $count = 0;
-        foreach ($this->reader->read() as $line) {
-            $count++;
-        }
-        $this->assertEquals(3, $count);
+        $file = new SplFileObject($this->stub_path('sample.csv'), 'r');
+        $reader = Reader::setFile($file);
+        
+        $this->assertEquals('sample.csv', $reader->file->getFileInfo()->getBasename());
     }
 
     /** @test */
-    public function it_can_read_the_same_file_twice()
+    public function it_can_read_a_file(): void
+    {
+        $lines = [];
+        $this->reader->withoutHeadings();
+
+        foreach ($this->reader->read() as $line) {
+            array_push($lines, $line);
+        }
+
+        $this->assertEqualsCanonicalizing(
+            array_map(fn ($item) => explode(';', $item), $this->lines),
+            $lines
+        );
+    }
+
+    /** @test **/
+    public function it_can_use_specific_seperator(): void
+    {
+        $this->reader->setSeparator('|');
+
+        $this->assertEquals('|', $this->reader->getSeparator());
+    }
+
+    /** @test */
+    public function it_can_use_specific_enclosure(): void
+    {
+        $this->reader->setEnclosure('"');
+
+        $this->assertEquals('"', $this->reader->getEnclosure());
+    }
+
+    /** @test */
+    public function it_can_use_specific_escape(): void
+    {
+        $this->reader->setEscape('*');
+
+        $this->assertEquals('*', $this->reader->getEscape());
+    }
+
+    /** @test */
+    public function it_can_read_the_same_file_twice(): void
     {
         $reader = $this->reader
             ->keyByColumnName()
             ->toObject();
 
-        $count = 0;
+        $collected = [];
         foreach ($reader->read() as $line) {
-            $count++;
+            array_push($collected, $line);
         }
 
         foreach ($reader->read() as $line) {
-            $count++;
+            array_push($collected, $line);
         }
 
-        $this->assertEquals(6, $count);
+        $this->assertEquals(6, count($collected));
     }
 
     /** @test */
-    public function it_handles_a_callback_to_map_the_lines()
+    public function it_handles_a_callback_to_map_the_lines(): void
     {
         // maping to stdClass
         $generator = $this->reader
@@ -80,7 +123,7 @@ class CsvReaderTest extends TestCase
     }
 
     /** @test */
-    public function it_skips_headings_by_default()
+    public function it_skips_headings_by_default(): void
     {
         $count = 0;
         foreach ($this->reader->read() as $row) {
@@ -91,7 +134,7 @@ class CsvReaderTest extends TestCase
     }
 
     /** @test */
-    public function it_returns_headings_when_requested()
+    public function it_returns_headings_when_requested(): void
     {
         $generator = $this->reader
             ->withHeadings()
@@ -106,7 +149,7 @@ class CsvReaderTest extends TestCase
     }
 
     /** @test */
-    public function results_are_keyed_by_column_name()
+    public function results_are_keyed_by_column_name(): void
     {
         $generator = $this->reader
             ->keyByColumnName()
@@ -119,7 +162,7 @@ class CsvReaderTest extends TestCase
     }
 
     /** @test */
-    public function it_results_instances_of_std_class_when_toObject_is_used()
+    public function it_results_instances_of_std_class_when_toObject_is_used(): void
     {
         $generator = $this->reader
             ->toObject()
@@ -133,9 +176,9 @@ class CsvReaderTest extends TestCase
     }
 
     /** @test */
-    public function rows_should_not_be_encoded_the_requested_encoding_matches_the_lines_encoding()
+    public function rows_should_not_be_encoded_the_requested_encoding_matches_the_lines_encoding(): void
     {
-        $reader = Csv::fakeReader([
+        $reader = Reader::fake([
             'name;count',
             'féé;1',
         ])->setToEncoding('UTF-8')
@@ -147,12 +190,31 @@ class CsvReaderTest extends TestCase
     }
 
     /** @test */
-    public function it_converts_iso_859_1_to_utf_8()
+    public function it_can_set_the_encoding_to_use(): void
     {
-        // todo: save stub as utf-8 and encode to iso-859-1 after loading
-        $reader = Csv::reader(
-            new SplFileObject(__DIR__ . '/../Stubs/iso-859-1.csv', 'r')
+        $this->reader->setToEncoding('UTF-16');
+
+        $this->assertEqualsCanonicalizing(
+            ['UTF-16', 'UTF-8', 'ISO-8859-15', 'ISO-8859-1'],
+            $this->reader->getSearchEncodings()
         );
+    }
+
+    /** @test */
+    public function it_can_set_the_encodings_to_search_for(): void
+    {
+        $this->reader->setSearchEncodings(['UTF-16']);
+
+        $this->assertEqualsCanonicalizing(
+            ['UTF-16'],
+            $this->reader->getSearchEncodings()
+        );
+    }
+
+    /** @test */
+    public function it_converts_iso_859_1_to_utf_8(): void
+    {
+        $reader = new reader(new SplFileObject($this->stub_path('iso-859-1.csv'), 'r'));
 
         $generator = $reader->setToEncoding('UTF-8')
             ->keyByColumnName()
@@ -166,5 +228,21 @@ class CsvReaderTest extends TestCase
 
             $this->assertEquals('clémentine', $row['prenom']);
         }
+    }
+
+    /** @test */
+    public function it_throws_if_headings_count_missmatches_rows_count(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        $reader = Reader::fake([
+            'column name*;count;erroneus collumn',
+            'foo;1',
+            'bar;2',
+            'baz;3',
+        ])->keyByColumnName()
+            ->read();
+
+        $reader->next();
     }
 }

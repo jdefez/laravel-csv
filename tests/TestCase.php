@@ -2,7 +2,6 @@
 
 namespace Jdefez\LaravelCsv\Tests;
 
-use Jdefez\LaravelCsv\CsvServiceProvider;
 use Orchestra\Testbench\TestCase as Orchestra;
 
 class TestCase extends Orchestra
@@ -12,14 +11,12 @@ class TestCase extends Orchestra
         parent::setUp();
     }
 
-    protected function getPackageProviders($app)
-    {
-        return [
-            CsvServiceProvider::class,
-        ];
-    }
-
     public function getEnvironmentSetUp($app)
     {
+    }
+
+    public function stub_path(string $filename): string
+    {
+        return __DIR__ . '/Stubs/' . $filename;
     }
 }

@@ -7,6 +7,7 @@ use Illuminate\Support\Str;
 use InvalidArgumentException;
 use SplFileObject;
 use stdClass;
+use ValueError;
 
 class Reader
 {
@@ -23,6 +24,12 @@ class Reader
     private ?string $to_encoding = null;
 
     private array $search_encodings = ['UTF-8', 'ISO-8859-15', 'ISO-8859-1'];
+
+    private string $separator = ",";
+
+    private string $enclosure = "\"";
+
+    private string $escape = "\\";
 
     final public function __construct(SplFileObject $file)
     {
@@ -42,6 +49,7 @@ class Reader
      * Returns a generator that can be used to iterate over the file rows. When
      * provided the callable is applyed to each row.
      *
+     * @return Generator<array|stdClass>
      * @throws InvalidArgumentException
      */
     public function read(?callable $callback = null): Generator
@@ -76,7 +84,7 @@ class Reader
     /**
      * Returns a new Reader instanciated with a SplTempFileObject
      */
-    public static function fake(array $lines, ?int $maxMemory = null): self
+    public static function fake(array $lines, ?int $maxMemory = null): static
     {
         return new static(File::fake($lines, $maxMemory));
     }
@@ -84,7 +92,7 @@ class Reader
     /**
      * Returns a new instance with the given SplFileObject
      */
-    public static function setFile(SplFileObject $file): self
+    public static function setFile(SplFileObject $file): static
     {
         return new static($file);
     }
@@ -92,7 +100,7 @@ class Reader
     /**
      * Sets the encoding that will be used to encode the rows to when needed
      */
-    public function setToEncoding(string $to_encoding): self
+    public function setToEncoding(string $to_encoding): static
     {
         $this->to_encoding = $to_encoding;
 
@@ -106,18 +114,30 @@ class Reader
      * encoding. It must include the encoding that will be used to fix the
      * current file.
      */
-    public function setSearchEncodings(array $encodings): self
+    public function setSearchEncodings(array $encodings): static
     {
         $this->search_encodings = $encodings;
 
         return $this;
     }
 
+    public function getSearchEncodings(): array
+    {
+        return $this->search_encodings;
+    }
+
     /**
      * By default the first row is skipped. Use this method to include the
      * first row.
      */
-    public function withHeadings(): self
+    public function withHeadings(): static
+    {
+        $this->skip_headings = false;
+
+        return $this;
+    }
+
+    public function withoutHeadings(): static
     {
         $this->skip_headings = false;
 
@@ -127,7 +147,7 @@ class Reader
     /**
      * The array of cells returned is keyed with the corresponding columns names.
      */
-    public function keyByColumnName(): self
+    public function keyByColumnName(): static
     {
         $this->key_by_column_name = true;
 
@@ -138,7 +158,7 @@ class Reader
      * Converts each rows to an object. Its properties are the snake cased
      * column names.
      */
-    public function toObject(): self
+    public function toObject(): static
     {
         $this->key_by_column_name = true;
         $this->to_object = true;
@@ -149,14 +169,46 @@ class Reader
     /**
      * Sets the delimiter, enclosure and escape to be used to parse the file.
      */
-    public function setDelimiter(
-        string $separator = ",",
-        string $enclosure = "\"",
-        string $escape = "\\"
-    ): self {
-        $this->file->setCsvControl($separator, $enclosure, $escape);
+    public function setSeparator(string $separator = ","): static
+    {
+        $this->separator = $separator;
+
+        $this->file->setCsvControl($this->separator, $this->enclosure, $this->escape);
 
         return $this;
+    }
+
+    public function getSeparator(): string
+    {
+        return $this->separator;
+    }
+
+    public function setEnclosure(string $enclosure = "\""): static
+    {
+        $this->enclosure = $enclosure;
+
+        $this->file->setCsvControl($this->separator, $this->enclosure, $this->escape);
+
+        return $this;
+    }
+
+    public function getEnclosure(): string
+    {
+        return $this->enclosure;
+    }
+
+    public function setEscape(string $escape = "\\"): static
+    {
+        $this->escape = $escape;
+
+        $this->file->setCsvControl($this->separator, $this->enclosure, $this->escape);
+
+        return $this;
+    }
+
+    public function getEscape(): string
+    {
+        return $this->escape;
     }
 
     protected function setHeadings(array $row)
@@ -183,7 +235,7 @@ class Reader
     }
 
     /**
-     * @throws InvalidArgumentException
+     * @throws ValueError
      * @return array|stdClass|null
      */
     protected function mapFields(array $row)
@@ -193,13 +245,11 @@ class Reader
         }
 
         if ($this->headings) {
-            $row = array_combine($this->headings, $row);
-
-            throw_unless(
-                $row,
-                InvalidArgumentException::class,
-                'Reader::mapFields failed'
-            );
+            try {
+                $row = array_combine($this->headings, $row);
+            } catch (ValueError $e) {
+                throw new InvalidArgumentException('Reader::mapFields failed');
+            }
 
             if ($this->to_object) {
                 $row = (object) $row;
@@ -251,10 +301,7 @@ class Reader
     private function addEncodingToSearchEncodings(string $to_encoding): void
     {
         if (!in_array($to_encoding, $this->search_encodings)) {
-            $this->search_encodings = array_unshift(
-                $this->search_encodings,
-                $to_encoding
-            );
+            array_unshift($this->search_encodings, $to_encoding);
         }
     }
 }
