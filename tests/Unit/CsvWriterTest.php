@@ -3,15 +3,15 @@
 namespace Jdefez\LaravelCsv\Tests\Unit;
 
 use Illuminate\Support\Collection;
-use Jdefez\LaravelCsv\Csv\Writable;
-use Jdefez\LaravelCsv\Facades\Csv;
+use Jdefez\LaravelCsv\Csv\Writer;
 use Jdefez\LaravelCsv\Tests\TestCase;
 use SplTempFileObject;
 
 class CsvWriterTest extends TestCase
 {
-    private Writable $writer;
+    private Writer $writer;
 
+    /** @var Collection<array> */
     private Collection $lines;
 
     public function setUp(): void
@@ -24,16 +24,15 @@ class CsvWriterTest extends TestCase
             ['name' => 'baz', 'count' => 3],
         ]);
 
-        $this->writer = Csv::fakeWriter()
-            ->setData($this->lines);
+        $this->writer = Writer::fake()->setData($this->lines);
     }
 
     /** @test */
     public function it_returns_an_instance_of_Writable()
     {
-        $file = new SplTempFileObject();
-        $writer = Csv::writer($file);
-        $this->assertInstanceOf(Writable::class, $writer);
+        $writer = Writer::setFile(new SplTempFileObject());
+
+        $this->assertInstanceOf(Writer::class, $writer);
     }
 
     /** @test */
@@ -87,17 +86,17 @@ class CsvWriterTest extends TestCase
     /** @test */
     public function it_can_put_one_line_to_the_file()
     {
-        $delimiter = ',';
-        $writer = Csv::fakeWriter()
-            ->setDelimiter($delimiter);
+        $writer = Writer::fake()->setSeparator(',');
 
         foreach ($this->lines as $line) {
+            /** @var array $line */
             $writer->put($line);
         }
 
         $count = 0;
         foreach ($writer->file as $line) {
-            $expected = implode($delimiter, $this->lines[$count]) . PHP_EOL;
+            /** @var array $line */
+            $expected = implode($writer->getSeparator(), $this->lines[$count]) . PHP_EOL;
             $this->assertEquals($expected, $line);
 
             $count++;
@@ -107,11 +106,33 @@ class CsvWriterTest extends TestCase
     }
 
     /** @test */
+    public function it_can_use_specific_separator(): void
+    {
+        $this->writer->setSeparator('|');
+
+        $this->assertEquals('|', $this->writer->getSeparator());
+    }
+
+    /** @test */
+    public function it_can_use_specific_escape(): void
+    {
+        $this->writer->setEscape('|');
+
+        $this->assertEquals('|', $this->writer->getEscape());
+    }
+
+    /** @test */
+    public function it_can_use_specific_encolsure(): void
+    {
+        $this->writer->setEnclosure('\'');
+
+        $this->assertEquals('\'', $this->writer->getEnclosure());
+    }
+
+    /** @test */
     public function put_method_can_handle_a_callable()
     {
-        $delimiter = ',';
-        $writer = Csv::fakeWriter()
-            ->setDelimiter($delimiter);
+        $writer = Writer::fake()->setSeparator(',');
 
         foreach ($this->lines as $line) {
             $writer->put(fn () => [
